@@ -1,0 +1,19 @@
+{
+  "name": "freenom-dns-updater",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dns-updater.js",
+  "dependencies": {
+    "dotenv": "^6.2.0",
+    "express": "^4.16.4",
+    "freenom-dns": "^0.9.4",
+    "nodemailer": "^5.1.1",
+    "public-ip": "^3.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node dns-updater.js"
+  },
+  "author": "Jan Šubelj",
+  "license": "GPL"
+}
