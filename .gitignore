@@ -3,3 +3,4 @@ node_modules/
 package-lock.json
 ip.txt
 ip_addr.txt
+log.json

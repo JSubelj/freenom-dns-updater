@@ -6,6 +6,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <script>
             function sendMail(){
+                let btn = document.getElementById("btn-sendMail");
+                btn.disabled = true;
+                document.getElementById("data").innerHTML="<p>Sending mail</p>"
                 var xmlhttp = new XMLHttpRequest();
                 xmlhttp.open("POST","/sendmail");
                 var xmlDoc;
@@ -14,6 +17,8 @@
                     xmlDoc = xmlhttp.response;
                     console.log(xmlDoc);
                     document.getElementById("data").innerHTML=xmlDoc;
+                    btn.disabled = false;
+
                     }
                 };
                 //xmlhttp.setRequestHeader('Content-Type', 'text/xml');
@@ -21,14 +26,19 @@
                 xmlhttp.send(xml);
             }
             function forceUpdate(){
+                let btn = document.getElementById("btn-forceUpdate");
+                document.getElementById("dns-data").innerHTML="<p>Force updating records. This may take a while.</p>";
+                btn.disabled = true;
                 var xmlhttp = new XMLHttpRequest();
                 xmlhttp.open("POST","/forcednsupdate");
                 var xmlDoc;
                 xmlhttp.onreadystatechange = function() {
                     if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    xmlDoc = xmlhttp.response;
-                    console.log(xmlDoc);
-                    document.getElementById("data").innerHTML=xmlDoc;
+                        xmlDoc = xmlhttp.response;
+                        console.log(xmlDoc);
+                        document.getElementById("dns-data").innerHTML=xmlDoc;
+                        btn.disabled = false;
+
                     }
                 };
                 //xmlhttp.setRequestHeader('Content-Type', 'text/xml');
@@ -52,12 +62,14 @@
                 <li>This crossroad site: <a href="https://www.cleptes.tk:19995">https://www.cleptes.tk:19995</a></li>
             </ul>
         </p>
-        <button onclick="sendMail()">Send mail with Ip</button>
-        <button onclick="forceUpdate()">Force update dns records</button>
-
-        <p id="data">
-
+        <p>
+            Dns update logs: <a href="/log.json">/log.json</a>
         </p>
+        <button id="btn-sendMail" onclick="sendMail()">Send mail with Ip</button>
+        <button id="btn-forceUpdate" onclick="forceUpdate()">Force update dns records</button>
+
+        <p id="data"></p>
+        <p id="dns-data"></p>
 
 
 

@@ -14,72 +14,110 @@ let recursive_update = (records_to_update, fun) => {
 		console.log("Setting record Subdomain: "+record.subdomain+" to: "+record.ip)
 		freenom.dns.setRecord(record.subdomain, "A", record.ip).then(ret => {
 			console.log("Record set");
-			if (!ret[0].status){
-				console.log("Error whilst update!")
-				console.log(ret);
-				return fun();
-			}
-
-			freenom.dns.listRecords(domain).then(records => {
-				let new_record = records.find(el => el.name == record.subdomain.split('.')[0])
-				if (new_record.value != record.ip){
-					console.log("Wrong IP!")
-					console.log("Wanted:")
-					console.log(record);
-					console.log("Currently set:")
-					console.log(new_record)
-					return fun();
-				}
-				console.log("Subdomain: "+record.subdomain+" successfully updated to: "+new_record.value);
-				return recursive_update(records_to_update, fun);
-				
-			}).catch(err => {
-				console.log("Error whilst getting records!")
-				console.log(err);
-				return fun();
-			})
-
-
-
-
 		}).catch(err => {
 			console.log(err);
-			return fun()
+		}).finally(()=>{
+			recursive_update(records_to_update, fun);
 		})
 	} else {
 		return fun();
 	}
 }
 
+function check_ips(ip, callback, force){
+	freenom.dns.listRecords(domain).then(records => {
+		let results = records.reduce((acc, rec)=>{
+			if(rec.value != ip || force){
+				acc.different_ip.push({ip: ip, subdomain: rec.name+"."+domain, current_ip: rec.value});
+			}else{
+				acc.same_ip.push({ip: rec.value, subdomain: rec.name+"."+domain,});
+			}
+			return acc;
+		},{same_ip: [], different_ip: []})
+		
+		callback(null, results);
 
-function updater(fun=()=>{}, force){
+	}).catch((err) => {
+		callback(err)
+	})
+
+
+}
+
+function updater(callback=()=>{}, force){
+	var fun = (err, results) => {
+		fs.exists("./log.json",(exists)=>{
+			if(exists){
+				fs.readFile("./log.json",(err_rf, data)=>{
+					if(err_rf){
+						console.log(`Error reading to file: ${err_rf}`);
+
+					}
+
+					let log = JSON.parse(data);
+					if (log.length == 5){
+						log.pop()
+					}
+					log.unshift({err: err, results: results, timestamp: new Date().toISOString()})
+					fs.writeFile("./log.json",JSON.stringify(log,null,4),(err)=>{
+						if (err){
+							console.log(`Error reading to file: ${err}`);
+						}
+					})
+
+				})
+			}else{
+				let log = [{err: err, results: results, timestamp: new Date().toISOString()}]
+				fs.writeFile("./log.json",JSON.stringify(log,null,4),(err)=>{
+					if (err){
+						console.log(`Error reading to file: ${err}`);
+					}
+				})
+			}
+		});
+		callback(err, results);
+	}
 	console.log("Starting update.")
 
 	publicIp.v4().then(ip => {
-			freenom.dns.listRecords(domain).then(records => {
-				
-				const public_ip = String(ip);
-				//console.log(records);
-				let records_to_update = records.reduce((acc, rec) => {
-					if(rec.value != public_ip || force){
-						acc.push({ip: public_ip, subdomain: rec.name+"."+domain});
-					}
-					return acc
-				},[]);
-
-				//console.log(records_to_update);
-				if (!records_to_update.length) {
-					console.log("Nothing to do! Exiting.");
-					return fun();
-				}else{
-					console.log(records_to_update.length+" records to update");
-					recursive_update(records_to_update, fun);
+		const public_ip = String(ip);
+			check_ips(public_ip, (err, results)=>{
+				results.public_ip = public_ip;
+				if(err){
+					console.log("Check ip error:")
+					console.log(err);
+					return fun(err);
 				}
 
-			}).catch(err => {
-				console.log(err);
-				return fun();
-			});
+				if (!results.different_ip.length) {
+					console.log("Nothing to do! Exiting.");
+					return fun(null, results);
+				}
+				
+				console.log(results.different_ip.length+" records to update");
+				recursive_update(results.different_ip, () =>{
+					check_ips(public_ip, (err, results)=>{
+						results.public_ip = public_ip;
+
+						if(err){
+							console.log("Check ip after update error:")
+							console.log(err);
+							return fun(err);
+						}
+
+						if(results.different_ip.length){
+							console.log("Not all IPs updated!");
+							console.log(results.different_ip);
+							return fun("Not all Ips were updated!", results);
+						}
+
+						return fun(null, results);
+					})
+				});
+				
+			}, force);
+
+		
 		}).catch(err=>{
 			console.log(err);
 			return fun();
@@ -88,7 +126,16 @@ function updater(fun=()=>{}, force){
 
 let on_file_change = () =>{
 	fs.unwatchFile("./ip_addr.txt",on_file_change);
-	updater(file_watcher);
+	updater((err, results) => {
+		if(err){
+			console.log("Error updating dns records!")
+			console.log(err);
+			console.log(results);
+			on_file_change();
+			return;
+		}
+		file_watcher();
+	});
 }
 
 let file_watcher = () => {
