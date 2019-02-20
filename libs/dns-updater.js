@@ -1,41 +1,19 @@
+"use strict"
 require('dotenv').config()
-const publicIp = require('public-ip');
-const fs = require('fs');
-const nodemailer = require('nodemailer');
 const user = process.env.FREENOM_USER;
 const pass = process.env.FREENOM_PASS;
 const domain = process.env.DOMAIN
+
+const fs = require('fs');
+const publicIp = require("public-ip");
 const freenom = require("freenom-dns").init(user,pass);
-const express= require("express");
-const PORT = process.env.SERVER_PORT;
-const HOST = "0.0.0.0";
-
-
-const transporter = nodemailer.createTransport({
-	service: 'gmail',
-	auth: {
-		user: process.env.GMAIL_SENDER,
-		pass: process.env.GMAIL_PASS
-	}
-})
-
-const mailOptions = {
-	from: process.env.GMAIL_SENDER,
-	to: process.env.RECIPIENT,
-	subject: "Ip address for today",
-	html: '<p> Ip was changed! This is the new ip: </p>'
-}
-
-transporter.sendMail(mailOptions, (err,info)=>{
-	if(err) console.log(err);
-	else console.log(info);
-})
-
 
 let recursive_update = (records_to_update, fun) => {
 	if (records_to_update.length){
 		let record = records_to_update.pop();
+		console.log("Setting record Subdomain: "+record.subdomain+" to: "+record.ip)
 		freenom.dns.setRecord(record.subdomain, "A", record.ip).then(ret => {
+			console.log("Record set");
 			if (!ret[0].status){
 				console.log("Error whilst update!")
 				console.log(ret);
@@ -64,22 +42,26 @@ let recursive_update = (records_to_update, fun) => {
 
 
 
+		}).catch(err => {
+			console.log(err);
+			return fun()
 		})
 	} else {
 		return fun();
 	}
 }
 
-function updater(fun=()=>{}){
+
+function updater(fun=()=>{}, force){
 	console.log("Starting update.")
 
 	publicIp.v4().then(ip => {
 			freenom.dns.listRecords(domain).then(records => {
 				
-				const public_ip = fs.readFileSync("./ip.txt","utf-8");//String(ip);
+				const public_ip = String(ip);
 				//console.log(records);
 				let records_to_update = records.reduce((acc, rec) => {
-					if(rec.value != public_ip){
+					if(rec.value != public_ip || force){
 						acc.push({ip: public_ip, subdomain: rec.name+"."+domain});
 					}
 					return acc
@@ -104,16 +86,14 @@ function updater(fun=()=>{}){
 		})
 }
 
-function main(){
-	let update_runner = () => setTimeout(() => {updater(update_runner);}, 1000, "updater");
-	updater(update_runner);
-	
-	const app = express();
-	app.get("/", (req,res)=>{
-		res.send("hello");
-	})
-
-	app.listen(PORT,HOST);
-	console.log(`Running on http://${HOST}:${PORT}`);
+let on_file_change = () =>{
+	fs.unwatchFile("./ip_addr.txt",on_file_change);
+	updater(file_watcher);
 }
- main();
+
+let file_watcher = () => {
+	fs.watchFile("./ip_addr.txt",on_file_change);
+}
+
+module.exports.start = file_watcher;
+module.exports.force_update = (callback) => {updater(callback, true)};

@@ -4,6 +4,41 @@
         <title>Crossroad | cleptes.tk</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script>
+            function sendMail(){
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("POST","/sendmail");
+                var xmlDoc;
+                xmlhttp.onreadystatechange = function() {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    xmlDoc = xmlhttp.response;
+                    console.log(xmlDoc);
+                    document.getElementById("data").innerHTML=xmlDoc;
+                    }
+                };
+                //xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+                var xml = "<?xml version='1.0'?><query><author>John Steinbeck</author></query>";
+                xmlhttp.send(xml);
+            }
+            function forceUpdate(){
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("POST","/forcednsupdate");
+                var xmlDoc;
+                xmlhttp.onreadystatechange = function() {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    xmlDoc = xmlhttp.response;
+                    console.log(xmlDoc);
+                    document.getElementById("data").innerHTML=xmlDoc;
+                    }
+                };
+                //xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+                var xml = "<?xml version='1.0'?><query><author>John Steinbeck</author></query>";
+                xmlhttp.send(xml);
+            }
+        
+        
+        
+        </script>
     </head>
     <body>
         <h1> Hello Cleptes. </h1>
@@ -17,7 +52,12 @@
                 <li>This crossroad site: <a href="https://www.cleptes.tk:19995">https://www.cleptes.tk:19995</a></li>
             </ul>
         </p>
+        <button onclick="sendMail()">Send mail with Ip</button>
+        <button onclick="forceUpdate()">Force update dns records</button>
 
+        <p id="data">
+
+        </p>
 
 
 
