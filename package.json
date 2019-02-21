@@ -12,7 +12,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "node dns-updater.js"
+    "start": "node server.js"
   },
   "author": "Jan Šubelj",
   "license": "GPL"

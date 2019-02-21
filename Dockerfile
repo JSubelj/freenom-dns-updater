@@ -5,7 +5,7 @@ COPY package*.json ./
 
 RUN npm install
 
-COPY dns-updater.js .
+COPY server.js .
 COPY libs ./libs
 
 ENV production=true
