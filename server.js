@@ -1,4 +1,5 @@
-if(!process.env.PRODUCTION) require('dotenv').config()
+if(process.env.PRODUCTION == "false") require('dotenv').config()
+else console.log("Production!");
 const express= require("express");
 const PORT = process.env.SERVER_PORT;
 const HOST = "0.0.0.0";

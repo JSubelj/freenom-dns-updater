@@ -1,4 +1,4 @@
-if(!process.env.PRODUCTION) require('dotenv').config()
+if(process.env.PRODUCTION == "false") require('dotenv').config()
 const nodemailer = require('nodemailer');
 const publicIp = require("public-ip");
 

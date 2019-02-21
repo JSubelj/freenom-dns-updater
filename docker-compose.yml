@@ -2,5 +2,8 @@ version: '2'
 
 services:
   dns-updated:
-    build: .
+    image: freenom-dns-updater
     ports: 
+      - 8080:8080
+    env_file:
+      - ./.env

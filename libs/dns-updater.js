@@ -1,5 +1,5 @@
 "use strict"
-if(!process.env.PRODUCTION) require('dotenv').config()
+if(process.env.PRODUCTION == "false") require('dotenv').config()
 const user = process.env.FREENOM_USER;
 const pass = process.env.FREENOM_PASS;
 const domain = process.env.DOMAIN

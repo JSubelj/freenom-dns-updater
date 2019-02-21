@@ -7,8 +7,9 @@ RUN npm install
 
 COPY server.js .
 COPY libs ./libs
+COPY index.html .
 
-ENV production=true
+ENV PRODUCTION=true PORT=8080
 
 EXPOSE 8080
 
