@@ -1,4 +1,4 @@
-require('dotenv').config()
+if(!process.env.PRODUCTION) require('dotenv').config()
 const express= require("express");
 const PORT = process.env.SERVER_PORT;
 const HOST = "0.0.0.0";
