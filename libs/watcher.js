@@ -10,27 +10,31 @@ let write_ip_to_file = (ip) => {
 }
 
 let has_ip_changed = () => {
-    publicIp.v4().then(ip => {
-        if(fs.existsSync("./ip_addr.txt")){
-            fs.readFile("./ip_addr.txt", (err,data) => {
+    var http = require('http');
 
-                if(err) {
-                    console.log("Error when reading ip address: "+err);
-                    return
-                }
-                
-                if(data != String(ip)){
-                    console.log("Ip changed to "+ip);
-                    write_ip_to_file(ip);
-                    mailer.send_mail_with_ip(ip);
-                }
-                
+    http.get({'host': 'api.ipify.org', 'port': 80, 'path': '/'}, function(resp) {
+      resp.on('data', function(ip) {
+          if(fs.existsSync("./ip_addr.txt")){
+                fs.readFile("./ip_addr.txt", (err,data) => {
 
-            })
-        }else{
-            write_ip_to_file(ip);
-        }
+                    if(err) {
+                        console.log("Error when reading ip address: "+err);
+                        return
+                    }
 
+                    if(data != String(ip)){
+                        console.log("Ip changed to "+ip);
+                        write_ip_to_file(ip);
+                        mailer.send_mail_with_ip(ip);
+                    }
+
+
+                })
+            }else{
+                write_ip_to_file(ip);
+            }
+        console.log("My public IP address is: " + ip);
+      });
     });
 }
 
