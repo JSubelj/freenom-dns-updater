@@ -61,6 +61,6 @@ module.exports.send_mail_with_ip = (ip, callback) => {
 }
 
 
-schedule.scheduleJob({hour: 00, minute:00}, () => { 
+schedule.scheduleJob("0 0 0 * * *", () => { 
 	module.exports.send_mail_with_ip();
 })
