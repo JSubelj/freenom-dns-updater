@@ -50,10 +50,10 @@ app.post("/sendmail", (req,res)=>{
 	mailer.send_mail_with_ip(null, (err,info)=>{
 		if(err) res.send(err);
 		else {
-			let stringToSend = `<h1>Email sent!</h1>
-			<p>Sent <br>From: ${info.envelope.from} <br>To: ${info.envelope.to}</p>
+			let stringToSend = `<h1>Email sent!</h1> <p>${JSON.stringify(info)}</p>`
+			/*<p>Sent <br>From: ${info.envelope.from} <br>To: ${info.envelope.to}</p>
 			</p>Accepted: ${info.accepted}; Rejected: ${info.rejected}</p>
-			`
+			`*/
 			res.send(stringToSend);
 		}
 	})
