@@ -34,10 +34,14 @@ let mailOptions = {
 let sendMail = (ip, callback) => {
 	mailOptions.html = `<h1>Your server's IP has changed! </h1> <h3>The new IP is: <b>${ip}</b></h3><p>Sent from <a href="https://github.com/JSubelj/freenom-dns-updater">freenom-dns-updater</a></p>`
 	mailOptions.from = process.env.COCKLI_SENDER;
+	console.log("Sending mail", mailOptions);
+
 	transporterCockli.sendMail(mailOptions, (err, info) => {
 		if (err){ 
 			console.log(err);
 			mailOptions.from = process.env.GMAIL_SENDER;
+			console.log("Sending mail via gmail", mailOptions);
+
 			transporterGmail.sendMail(mailOptions, (err, info)=>{
 				if(err){
 					console.log(err);
@@ -56,15 +60,33 @@ let sendMail = (ip, callback) => {
 
 module.exports.send_mail_with_ip = (ip, callback) => {
 	if (ip) {
-		console.log("Sending mail", mailOptions);
+		ip=String(ip);
+		if(ip.split(".").every(element => {
+			return Number(element) < 256;
+		}) && ip.split(".").length == 4){
+			sendMail(ip, callback);
+		}else{
+			console.warn("This is not real ip!:",ip);
+			console.log("Trying again");
+			module.exports.send_mail_with_ip(null, callback);
 
-		sendMail(ip, callback);
+		}
+
 	} else {
-		console.log("Sending mail", mailOptions);
 
 		http.get({ 'host': 'api.ipify.org', 'port': 80, 'path': '/' }, function (resp) {
 			resp.on('data', function (ip) {
-				sendMail(ip, callback);
+				ip=String(ip);
+				if(ip.split(".").every(element => {
+					return Number(element) < 256;
+				}) && ip.split(".").length == 4){
+					sendMail(ip, callback);
+				}else{
+					console.warn("This is not real ip!:",ip)
+					console.log("Trying again");
+					module.exports.send_mail_with_ip(null, callback);
+				}
+				
 			});
 		});
 	}
