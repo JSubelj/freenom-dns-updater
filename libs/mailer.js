@@ -34,25 +34,25 @@ let mailOptions = {
 let sendMail = (ip, callback) => {
 	mailOptions.html = `<h1>Your server's IP has changed! </h1> <h3>The new IP is: <b>${ip}</b></h3><p>Sent from <a href="https://github.com/JSubelj/freenom-dns-updater">freenom-dns-updater</a></p>`
 	mailOptions.from = process.env.COCKLI_SENDER;
-	console.log("Sending mail", mailOptions);
+	console.log(new Date().toISOString(), "Sending mail", mailOptions);
 
 	transporterCockli.sendMail(mailOptions, (err, info) => {
-		if (err){ 
-			console.log(err);
+		if (err) {
+			console.log(new Date().toISOString(), err);
 			mailOptions.from = process.env.GMAIL_SENDER;
-			console.log("Sending mail via gmail", mailOptions);
+			console.log(new Date().toISOString(), "Sending mail via gmail", mailOptions);
 
-			transporterGmail.sendMail(mailOptions, (err, info)=>{
-				if(err){
-					console.log(err);
-					
+			transporterGmail.sendMail(mailOptions, (err, info) => {
+				if (err) {
+					console.log(new Date().toISOString(), err);
+
 				}
-				if(callback) callback(err, info);
+				if (callback) callback(new Date().toISOString(), err, info);
 			})
 		}
 		else {
 			console.log(info);
-			if (callback) callback(err, info);
+			if (callback) callback(new Date().toISOString(), err, info);
 		}
 	});
 }
@@ -60,14 +60,14 @@ let sendMail = (ip, callback) => {
 
 module.exports.send_mail_with_ip = (ip, callback) => {
 	if (ip) {
-		ip=String(ip);
-		if(ip.split(".").every(element => {
+		ip = String(ip);
+		if (ip.split(".").every(element => {
 			return Number(element) < 256;
-		}) && ip.split(".").length == 4){
+		}) && ip.split(".").length == 4) {
 			sendMail(ip, callback);
-		}else{
-			console.warn("This is not real ip!:",ip);
-			console.log("Trying again");
+		} else {
+			console.warn(new Date().toISOString(), "This is not real ip!:", ip);
+			console.log(new Date().toISOString(), "Trying again");
 			module.exports.send_mail_with_ip(null, callback);
 
 		}
@@ -76,24 +76,32 @@ module.exports.send_mail_with_ip = (ip, callback) => {
 
 		http.get({ 'host': 'api.ipify.org', 'port': 80, 'path': '/' }, function (resp) {
 			resp.on('data', function (ip) {
-				ip=String(ip);
-				if(ip.split(".").every(element => {
+				ip = String(ip);
+				if (ip.split(".").every(element => {
 					return Number(element) < 256;
-				}) && ip.split(".").length == 4){
+				}) && ip.split(".").length == 4) {
 					sendMail(ip, callback);
-				}else{
-					console.warn("This is not real ip!:",ip)
-					console.log("Trying again");
+				} else {
+					console.warn(new Date().toISOString(), "This is not real ip!:", ip)
+					console.log(new Date().toISOString(), "Trying again");
 					module.exports.send_mail_with_ip(null, callback);
 				}
-				
+
 			});
 		});
 	}
 }
 
 
-const cron=require("node-cron");
-cron.schedule("0 7 * * *", () => {
-	module.exports.send_mail_with_ip()
-  });
+const cron = require("node-cron");
+
+cron.schedule("28 9 * * *", () => {
+	let fun = () => {
+		console.log(new Date().toISOString(), "Sending scheduled mail.")
+		module.exports.send_mail_with_ip(null, (err, succ) => {
+			console.log(new Date().toISOString(), "err:",err);
+			console.log(new Date().toISOString(), "succ:",succ);
+		});
+	};
+	fun();
+});

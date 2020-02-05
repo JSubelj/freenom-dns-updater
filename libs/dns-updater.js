@@ -15,11 +15,11 @@ var http = require('http');
 let recursive_update = (records_to_update, fun) => {
 	if (records_to_update.length) {
 		let record = records_to_update.pop();
-		console.log("Setting record Subdomain: " + record.subdomain + " to: " + record.ip)
+		console.log(new Date().toISOString(), "Setting record Subdomain: " + record.subdomain + " to: " + record.ip)
 		freenom.dns.setRecord(record.subdomain, "A", record.ip).then(ret => {
-			console.log("Record set");
+			console.log(new Date().toISOString(), "Record set");
 		}).catch(err => {
-			console.log(err);
+			console.log(new Date().toISOString(), err);
 		}).finally(() => {
 			recursive_update(records_to_update, fun);
 		})
@@ -54,34 +54,38 @@ function updater(callback = () => { }, force) {
 			if (exists) {
 				fs.readFile("./log.json", (err_rf, data) => {
 					if (err_rf) {
-						console.log(`Error reading to file: ${err_rf}`);
+						console.log(new Date().toISOString(), `Error reading to file: ${err_rf}`);
 
 					}
 
-					let log = JSON.parse(data);
-					if (log.length == 5) {
-						log.pop()
-					}
-					log.unshift({ err: err, results: results, timestamp: new Date().toISOString() })
-					fs.writeFile("./log.json", JSON.stringify(log, null, 4), (err) => {
-						if (err) {
-							console.log(`Error reading to file: ${err}`);
+					try {
+						let log = JSON.parse(data);
+
+						if (log.length == 5) {
+							log.pop()
 						}
-					})
-
+						log.unshift({ err: err, results: results, timestamp: new Date().toISOString() })
+						fs.writeFile("./log.json", JSON.stringify(log, null, 4), (err) => {
+							if (err) {
+								console.log(new Date().toISOString(), `Error reading to file: ${err}`);
+							}
+						})
+					} catch (err) {
+						return callback(err);
+					}
 				})
 			} else {
 				let log = [{ err: err, results: results, timestamp: new Date().toISOString() }]
 				fs.writeFile("./log.json", JSON.stringify(log, null, 4), (err) => {
 					if (err) {
-						console.log(`Error reading to file: ${err}`);
+						console.log(new Date().toISOString(), `Error reading to file: ${err}`);
 					}
 				})
 			}
 		});
 		callback(err, results);
 	}
-	console.log("Starting update.")
+	console.log(new Date().toISOString(),"Starting update.")
 
 	http.get({ 'host': 'api.ipify.org', 'port': 80, 'path': '/' }, function (resp) {
 		resp.on('data', function (ip) {
@@ -89,31 +93,31 @@ function updater(callback = () => { }, force) {
 			check_ips(public_ip, (err, results) => {
 				results.public_ip = public_ip;
 				if (err) {
-					console.log("Check ip error:")
+					console.log(new Date().toISOString(), "Check ip error:")
 					console.log(err);
 					return fun(err);
 				}
 
 				if (!results.different_ip.length) {
-					console.log("Nothing to do! Exiting.");
+					console.log(new Date().toISOString(), "Nothing to do! Exiting.");
 					return fun(null, results);
 				}
 
-				console.log(results.different_ip.length + " records to update");
+				console.log(new Date().toISOString(), results.different_ip.length + " records to update");
 				recursive_update(results.different_ip, () => {
 					check_ips(public_ip, (err, results) => {
 						results.public_ip = public_ip;
 
 						if (err) {
-							console.log("Check ip after update error:")
-							console.log(err);
+							console.log(new Date().toISOString(), "Check ip after update error:")
+							console.log(new Date().toISOString(), err);
 							return fun(err);
 						}
 
 						if (results.different_ip.length) {
-							console.log("Not all IPs updated!");
-							console.log(results.different_ip);
-							return fun("Not all Ips were updated!", results);
+							console.log(new Date().toISOString(), "Not all IPs updated!");
+							console.log(new Date().toISOString(), results.different_ip);
+							return fun(new Date().toISOString(), "Not all Ips were updated!", results);
 						}
 
 						return fun(null, results);
@@ -130,9 +134,9 @@ let on_file_change = () => {
 	fs.unwatchFile("./ip_addr.txt", on_file_change);
 	updater((err, results) => {
 		if (err) {
-			console.log("Error updating dns records!")
-			console.log(err);
-			console.log(results);
+			console.log(new Date().toISOString(), "Error updating dns records!")
+			console.log(new Date().toISOString(), err);
+			console.log(new Date().toISOString(), results);
 			on_file_change();
 			return;
 		}

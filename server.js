@@ -8,7 +8,8 @@ const path = require("path");
 const dnsUpdater = require("./libs/dns-updater")
 
 require("./libs/watcher").start();
-dnsUpdater.start();
+setTimeout(() => {dnsUpdater.start(); }, 120000, "dnsUpdater")
+
 
 
 const app = express();

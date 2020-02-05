@@ -6,8 +6,8 @@ const mailer = require("./mailer");
 
 
 let write_ip_to_file = (ip) => {
-    console.log("Writing to file:", ip)
-    fs.writeFile("./ip_addr.txt", ip, (err) => { if (err) console.log("Write IP error: " + err) })
+    console.log(new Date().toISOString(), "Writing to file:", ip)
+    fs.writeFile("./ip_addr.txt", ip, (err) => { if (err) console.log(new Date().toISOString(), "Write IP error: " + err) })
 }
 
 let has_ip_changed = () => {
@@ -24,12 +24,12 @@ let has_ip_changed = () => {
                     fs.readFile("./ip_addr.txt", (err, data) => {
 
                         if (err) {
-                            console.log("Error when reading ip address: " + err);
+                            console.log(new Date().toISOString(), "Error when reading ip address: " + err);
                             return
                         }
 
                         if (data != String(ip)) {
-                            console.log("Ip changed to " + ip);
+                            console.log(new Date().toISOString(), "Ip changed to " + ip);
                             write_ip_to_file(ip);
                             mailer.send_mail_with_ip(String(ip));
                         }
@@ -40,9 +40,9 @@ let has_ip_changed = () => {
                     write_ip_to_file(ip);
                 }
             }else{
-                console.log("This is not IP!!,",ip);
+                console.log(new Date().toISOString(), "This is not IP!!,",ip);
             }
-            console.log("My public IP address is: " + ip);
+            console.log(new Date().toISOString(), "My public IP address is: " + ip);
         });
     });
 }
