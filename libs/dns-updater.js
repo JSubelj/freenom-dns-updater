@@ -5,7 +5,6 @@ const pass = process.env.FREENOM_PASS;
 const domain = process.env.DOMAIN
 
 const fs = require('fs');
-const publicIp = require("public-ip");
 const freenom = require("freenom-dns").init(user, pass);
 
 var http = require('http');
@@ -49,7 +48,11 @@ function check_ips(ip, callback, force) {
 }
 
 function updater(callback = () => { }, force) {
+	// Update log function
 	var fun = (err, results) => {
+		if(!results){
+			return callback()
+		}
 		fs.exists("./log.json", (exists) => {
 			if (exists) {
 				fs.readFile("./log.json", (err_rf, data) => {
@@ -100,7 +103,7 @@ function updater(callback = () => { }, force) {
 
 				if (!results.different_ip.length) {
 					console.log(new Date().toISOString(), "Nothing to do! Exiting.");
-					return fun(null, results);
+					return fun(null, null);
 				}
 
 				console.log(new Date().toISOString(), results.different_ip.length + " records to update");
@@ -130,23 +133,7 @@ function updater(callback = () => { }, force) {
 
 }
 
-let on_file_change = () => {
-	fs.unwatchFile("./ip_addr.txt", on_file_change);
-	updater((err, results) => {
-		if (err) {
-			console.log(new Date().toISOString(), "Error updating dns records!")
-			console.log(new Date().toISOString(), err);
-			console.log(new Date().toISOString(), results);
-			on_file_change();
-			return;
-		}
-		file_watcher();
-	});
-}
+const watcher = () => setTimeout(() => { updater(watcher);  }, 60000, "ipwatcher");
 
-let file_watcher = () => {
-	fs.watchFile("./ip_addr.txt", on_file_change);
-}
-
-module.exports.start = file_watcher;
+module.exports.start = watcher
 module.exports.force_update = (callback) => { updater(callback, true) };
